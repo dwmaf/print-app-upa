@@ -27,9 +27,9 @@ class InertiaAuthController extends Controller
         if (Auth::attempt($credentials)) {
             $request->session()->regenerate();
 
+            /** @var \App\Models\User $user */
             $user = Auth::user();
 
-            // Redirect berdasarkan Role
             if ($user->hasRole('super-admin')) {
                 return redirect()->route('admin.upa.dashboard');
             } elseif ($user->hasRole('station-upa-pkk')) {
@@ -40,7 +40,6 @@ class InertiaAuthController extends Controller
                 return redirect('/station');
             }
 
-            // Default fallback jika tidak ada role yang cocok
             return redirect('/');
         }
 

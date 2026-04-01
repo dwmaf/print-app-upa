@@ -23,8 +23,6 @@ class InertiaUploadController extends Controller
 
     public function store(Request $request, $id)
     {
-        // $request->merge(['station_id' => $id]);
-
         $request->validate([
             'station_id' => 'required|exists:users,id',
             'files' => 'required|array|min:1',

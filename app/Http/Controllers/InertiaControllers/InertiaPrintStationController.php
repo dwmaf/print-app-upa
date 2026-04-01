@@ -19,16 +19,11 @@ class InertiaPrintStationController extends Controller
     {
         $station_id = Auth::id();
         $uploadUrl = $request->getSchemeAndHttpHost() . '/upa/upload/' . $station_id;
-
-        // Fetch files with latest verification request
         $filetoprints = Filetoprint::with(['latestPrintRequest'])
             ->latest()
-            ->where('station_id', $station_id) // Filter by station
+            ->where('station_id', $station_id)
             ->get();
-
-        // Generate QR Code as SVG string
         $qrCode = QrCode::size(300)->margin(2)->generate($uploadUrl);
-
         return Inertia::render('PrintStation/index', [
             'filetoprints' => $filetoprints,
             'stationId' => $station_id,
@@ -38,7 +33,6 @@ class InertiaPrintStationController extends Controller
 
     public function submitRequest(Request $request)
     {
-        // dd($request);
         $request->validate([
             'file_id' => 'required|exists:filetoprints,id',
             'station_id' => 'required',
@@ -54,7 +48,6 @@ class InertiaPrintStationController extends Controller
 
         $actualPages = $detectedPages;
         if (isset($config['pages']) && $config['pages'] !== 'all') {
-            // Count custom pages from string like "1,3,5-10"
             $actualPages = 0;
             $parts = explode(',', str_replace(' ', '', $config['pages']));
             foreach ($parts as $part) {
@@ -71,11 +64,9 @@ class InertiaPrintStationController extends Controller
                     $actualPages++;
                 }
             }
-            // Fallback if failed to parse or 0
             if ($actualPages === 0) $actualPages = $detectedPages;
         }
 
-        // Create Verification Request
         $verification = PrintRequest::create([
             'request_id' => 'REQ-' . strtoupper(uniqid()),
             'filetoprint_id' => $filetoprint->id,
@@ -89,16 +80,12 @@ class InertiaPrintStationController extends Controller
             'detected_pages' => $detectedPages,
             'calculated_pages' => $actualPages,
         ]);
-
-        // Dispatch event agar halaman admin teresfresh
         event(new NewTransactionCreated($request->station_id));
-
         return redirect()->back();
     }
 
     public function print(Request $request)
     {
-        // 1. Validasi Input
         $request->validate([
             'request_id' => 'required|exists:print_requests,id',
         ]);
@@ -107,18 +94,11 @@ class InertiaPrintStationController extends Controller
         $filetoprint  = Filetoprint::findOrFail($verification->filetoprint_id);
 
         $pdfPath = storage_path('app/public/' . $filetoprint->filename);
-
         if (!file_exists($pdfPath)) {
             return response()->json(['status' => 'error', 'message' => 'File tidak ditemukan.'], 404);
         }
 
-        // =====================================================================
-        // [PRODUCTION] Eksekusi Print via SumatraPDF !!
-        // =====================================================================
         $exePath = base_path('tools/SumatraPDF.exe');
-
-        // Kita jalankan print command jika .exe nya ada. Jika sedang di lokal dan
-        // driver ngga ada, ini tidak akan error, tapi status tetap bisa completed.
         if (file_exists($exePath)) {
             $settings = [];
             $settings[] = $verification->copies . "x";
@@ -139,15 +119,11 @@ class InertiaPrintStationController extends Controller
 
             $settingsString = implode(',', $settings);
             $command = "\"{$exePath}\" -print-to-default -print-settings \"{$settingsString}\" -silent \"{$pdfPath}\"";
-
             shell_exec($command);
         }
-        // =====================================================================
 
-        // Update status ke completed dan return JSON
         $verification->update(['status' => 'completed']);
         event(new TransactionUpdated($filetoprint->station_id));
-
         return response()->json([
             'status' => 'success',
             'message' => 'Perintah cetak terkirim.'

@@ -19,8 +19,7 @@ class DatabaseSeeder extends Seeder
          * 1 Roles (Spatie)
          */
         $roleAdmin = Role::firstOrCreate(['name' => 'super-admin']);
-        $roleOwner = Role::firstOrCreate(['name' => 'outlet-owner']);
-        $roleStation = Role::firstOrCreate(['name' => 'station']);
+        
         $roleStationUPAPKK = Role::firstOrCreate(['name' => 'station-upa-pkk']);
 
         /*

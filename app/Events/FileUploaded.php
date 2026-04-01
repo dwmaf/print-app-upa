@@ -20,7 +20,6 @@ class FileUploaded implements ShouldBroadcastNow
 
     public function broadcastOn(): array
     {
-        // Broadcast ke channel spesifik station
         return [new Channel('printing-channel.' . $this->stationId)];
     }
 
