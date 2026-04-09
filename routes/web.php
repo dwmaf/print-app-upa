@@ -37,8 +37,7 @@ Route::post('/logout', [InertiaAuthController::class, 'logout'])->name('logout')
 Route::group(['middleware' => ['auth', 'role:super-admin']], function () {
     Route::get('/admin/upa/dashboard', [InertiaAuthController::class, 'dashboard'])->name('admin.upa.dashboard');
     Route::get('/admin/upa/verify-print', [InertiaVerifyPrintController::class, 'index'])->name('admin.upa.verify-print.index');
-    Route::post('/admin/upa/verify-print/{id}/verify', [InertiaVerifyPrintController::class, 'verify'])->name('admin.upa.verify-print.verify');
-    Route::post('/admin/upa/verify-print/{id}/reject', [InertiaVerifyPrintController::class, 'reject'])->name('admin.upa.verify-print.reject');
+    Route::post('/admin/upa/verify-print/{id}', [InertiaVerifyPrintController::class, 'updateStatus'])->name('admin.upa.verify-print.action');
 });
 
 Route::group(['middleware' => ['auth', 'role:station-upa-pkk']], function () {

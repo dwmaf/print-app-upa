@@ -30,24 +30,19 @@ class InertiaVerifyPrintController extends Controller
         ]);
     }
 
-    public function verify($id)
+    public function updateStatus(Request $request, $id)
     {
-        $request = PrintRequest::findOrFail($id);
-        $request->update([
-            'status' => 'verified',
-            'verified_at' => now(),
+        $request->validate([
+            'action' => 'required|in:verify,reject'
         ]);
 
-        event(new TransactionUpdated($request->station_id));
-        return redirect()->back();
-    }
+        $printRequest = PrintRequest::findOrFail($id);
 
-    public function reject($id)
-    {
-        $request = PrintRequest::findOrFail($id);
-        $request->update([
-            'status' => 'rejected',
-        ]);
+        $data = $request->action === 'verify'
+            ? ['status' => 'verified', 'verified_at' => now()]
+            : ['status' => 'rejected'];
+
+        $printRequest->update($data);
 
         event(new TransactionUpdated($request->station_id));
         return redirect()->back();

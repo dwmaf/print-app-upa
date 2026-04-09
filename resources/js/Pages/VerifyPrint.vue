@@ -3,6 +3,7 @@ import { Head, useForm, router, Link } from '@inertiajs/vue3';
 import { ref, watch, onMounted } from 'vue';
 import { Search, Check, X, File, ChevronLeft, ChevronRight } from 'lucide-vue-next';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
+import Pagination from '@/Components/Pagination.vue';
 
 const props = defineProps({
     printrequests: Object,
@@ -21,7 +22,7 @@ watch(search, (value) => {
 
 onMounted(() => {
     if (window.Echo) {
-        // Listen ke channel khusus admin agar semua update dari semua station ketarik
+        // Listen ke channel ketika permintaan cetak dikirim
         window.Echo.channel('admin-upa-channel')
             .listen('.transaction.created', (e) => {
                 console.log('New transaction created, refreshing...');
@@ -54,13 +55,13 @@ const getStatusLabel = (status) => {
 
 const verify = (id) => {
     if (confirm('Verifikasi order ini?')) {
-        useForm({}).post(route('admin.upa.verify-print.verify', id));
+        useForm({ action: 'verify' }).post(route('admin.upa.verify-print.action', { id }));
     }
 };
 
 const reject = (id) => {
     if (confirm('Tolak order ini?')) {
-        useForm({}).post(route('admin.upa.verify-print.reject', id));
+        useForm({ action: 'reject' }).post(route('admin.upa.verify-print.action', { id }));
     }
 };
 
@@ -257,24 +258,7 @@ const reject = (id) => {
                 <div class="text-center sm:text-left">
                     Showing {{ printrequests.from }} to {{ printrequests.to }} of {{ printrequests.total }} entries
                 </div>
-                <div class="flex gap-1">
-                    <!-- <button
-                        class="w-8 h-8 bg-gray-100 rounded flex items-center justify-center hover:bg-gray-200 cursor-pointer">
-                        <ChevronLeft class="w-4 h-4" />
-                    </button>
-                    <button
-                        class="w-8 h-8 bg-white border rounded flex items-center justify-center font-bold text-black cursor-pointer">1</button>
-                    <button
-                        class="w-8 h-8 bg-gray-100 rounded flex items-center justify-center hover:bg-gray-200 cursor-pointer">
-                        <ChevronRight class="w-4 h-4" />
-                    </button> -->
-                    <Link v-for="link in printrequests.links" :key="link.label" :href="link.url || '#'"
-                        v-html="link.label" class="w-8 h-8 rounded flex items-center justify-center transition-all"
-                        :class="[
-                            link.active ? 'bg-indigo-600 text-white font-bold' : 'bg-gray-100 hover:bg-gray-200 text-gray-600',
-                            !link.url ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
-                        ]" />
-                </div>
+                <Pagination links="printrequests.links" />
             </div>
 
         </div>
