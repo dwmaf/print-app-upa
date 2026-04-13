@@ -4,7 +4,7 @@ namespace App\Http\Controllers\InertiaControllers;
 
 use App\Http\Controllers\Controller;
 use App\Models\PrintRequest;
-use App\Events\TransactionUpdated;
+use App\Events\RequestUpdated;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -13,7 +13,7 @@ class InertiaVerifyPrintController extends Controller
     public function index(Request $request)
     {
         $search = $request->input('search');
-        $printrequests = PrintRequest::with(['user', 'filetoprint'])
+        $printrequests = PrintRequest::with(['filetoprint'])
             ->when($search, function ($query, $search) {
                 $query->where('request_id', 'like', "%{$search}%")
                     ->orWhereHas('filetoprint', function ($q) use ($search) {
@@ -44,7 +44,7 @@ class InertiaVerifyPrintController extends Controller
 
         $printRequest->update($data);
 
-        event(new TransactionUpdated($request->station_id));
+        event(new RequestUpdated());
         return redirect()->back();
     }
 }

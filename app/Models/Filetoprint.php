@@ -35,9 +35,4 @@ class Filetoprint extends Model
     {
         return $this->latestPrintRequest ? $this->latestPrintRequest->status : 'new';
     }
-
-    public function station()
-    {
-        return $this->belongsTo(User::class, 'station_id');
-    }
 }

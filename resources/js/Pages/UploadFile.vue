@@ -3,12 +3,9 @@ import { ref } from 'vue';
 import { Head, useForm } from '@inertiajs/vue3';
 import { UploadCloud, CheckCircle, XCircle, FileText, Image as ImageIcon } from 'lucide-vue-next';
 const props = defineProps({
-    stationId: Number,
-    stationName: String,
 });
 // FORM
 const form = useForm({
-    station_id: props.stationId,
     files: [],
     _method: 'POST',
 });
@@ -26,7 +23,7 @@ const handleFiles = (e) => {
 };
 
 const submit = () => {
-    form.post(route('upa.upload.store', props.stationId), {
+    form.post(route('upa.upload.store'), {
         preserveScroll: true,
         onSuccess: () => {
             form.reset('files');
@@ -48,8 +45,7 @@ const onDrop = (e) => {
 </script>
 
 <template>
-
-    <Head title="Upload File" />
+    <Head title="Upload File"></Head>
     <div class="h-screen flex flex-col items-center justify-center p-6 bg-[#FAFAFA] font-roboto">
 
         <!-- HEADER -->
@@ -59,7 +55,7 @@ const onDrop = (e) => {
                 <h1 class="text-4xl font-koulen text-gray-900 leading-none">PRINTATION</h1>
             </div>
             <h2 class="uppercase font-bold text-gray-400 font-roboto tracking-wider text-sm">
-                {{stationName}}
+                UPA PK2 UNTAN
             </h2>
         </div>
 

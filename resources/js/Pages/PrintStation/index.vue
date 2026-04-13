@@ -14,7 +14,6 @@ import DeleteModal from './Modals/DeleteModal.vue';
 const props = defineProps({
     filetoprints: Array,
     qrCode: String,
-    stationId: Number,
 });
 
 // STATE
@@ -97,7 +96,6 @@ const closePrintModal = () => {
 const submitRequest = () => {
     const form = useForm({
         file_id: currentFile.value.id,
-        station_id: props.stationId,
         print_config: {
             copies: config.value.copies,
             color: config.value.colorMode,
@@ -167,28 +165,29 @@ const confirmBulkDelete = () => {
 
 onMounted(() => {
     if (window.Echo) {
-        window.Echo.channel(`printing-channel.${props.stationId}`)
+        window.Echo.channel(`printing-channel`)
             .listen('.file.uploaded', () => router.reload({ preserveScroll: true }))
-            .listen('.transaction.updated', () => router.reload({ preserveScroll: true }));
+            .listen('.request.updated', () => router.reload({ preserveScroll: true }));
     }
 });
 </script>
 
 <template>
-    <div class="min-h-screen flex flex-col bg-[#FAFAFA] font-roboto text-gray-800 p-4 md:p-8">
+    <Head title="Station Print"></Head>
+        <div v-if="!modalOpen" class="min-h-screen flex flex-col bg-[#FAFAFA] font-roboto text-gray-800 p-4 md:p-8">
+            <!-- EMPTY / QR STATE -->
+            <EmptyQR v-if="filetoprints.length === 0 || showQr" :qr-code="qrCode" :show-qr="showQr"
+                :station-name="$page.props.auth.user.name" @toggle-qr="showQr = !showQr" />
+    
+            <!-- FILE TABLE STATE -->
+            <FileTable v-if="filetoprints.length > 0" :filetoprints="filetoprints" :qr-code="qrCode"
+                 :selected-ids="selectedIds" :station-name="$page.props.auth.user.name"
+                @update-selected-ids="(ids) => selectedIds = ids" @open-print-modal="openPrintModal"
+                @open-delete-modal="openDeleteModal" @delete-multiple="bulkDeleteModalOpen = true" />
+        </div>
 
-        <!-- EMPTY / QR STATE -->
-        <EmptyQR v-if="filetoprints.length === 0 || showQr" :qr-code="qrCode" :show-qr="showQr"
-            :station-name="$page.props.auth.user.name" @toggle-qr="showQr = !showQr" />
-
-        <!-- FILE TABLE STATE -->
-        <FileTable v-if="filetoprints.length > 0" :filetoprints="filetoprints" :qr-code="qrCode"
-             :selected-ids="selectedIds" :station-name="$page.props.auth.user.name"
-            @update-selected-ids="(ids) => selectedIds = ids" @open-print-modal="openPrintModal"
-            @open-delete-modal="openDeleteModal" @delete-multiple="bulkDeleteModalOpen = true" />
-
-        <!-- MODALS -->
-        <PrintConfig :show="modalOpen" :current-file="currentFile" :config="config" :loading="loading"
+        <!-- Print Config -->
+        <PrintConfig v-if="modalOpen" :current-file="currentFile" :config="config" :loading="loading"
             @close="closePrintModal" @submit="submitRequest" @execute="executePrint" />
 
         <DeleteModal :show="deleteModalOpen" @close="deleteModalOpen = false" @confirm="confirmDelete" />
@@ -196,5 +195,4 @@ onMounted(() => {
         <DeleteModal :show="bulkDeleteModalOpen" :is-bulk="true" :title="`Hapus ${selectedIds.length} File?`"
             message="Semua file yang dipilih akan dihapus permanen dari server." confirm-text="Hapus Semua"
             @close="bulkDeleteModalOpen = false" @confirm="confirmBulkDelete" />
-    </div>
 </template>

@@ -1,8 +1,9 @@
 <script setup>
-import { Head } from '@inertiajs/vue3';
+import { Head, router } from '@inertiajs/vue3';
 import { Printer, TrendingUp, TrendingDown, BarChart3 } from 'lucide-vue-next';
+import { ref, watch, onMounted } from 'vue';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
-import VueApexCharts from "vue3-apexcharts"; // Install: npm install vue3-apexcharts apexcharts
+import VueApexCharts from "vue3-apexcharts";
 
 const props = defineProps({
     stats: Object
@@ -20,11 +21,26 @@ const chartSeries = [{
     name: 'Total Lembar',
     data: props.stats.chartData.map(d => d.total)
 }];
+
+onMounted(() => {
+    if (window.Echo) {
+        // Listen ke channel ketika permintaan cetak dikirim/diperbarui statusnya
+        window.Echo.channel('admin-upa-channel')
+            .listen('.request.created', (e) => {
+                console.log('New request created, refreshing...');
+                router.reload({ preserveScroll: true });
+            })
+            .listen('.request.updated', (e) => {
+                console.log('Request updated, refreshing...');
+                router.reload({ preserveScroll: true });
+            });
+    }
+});
 </script>
 
 <template>
 
-    <Head title="Admin Dashboard" />
+    <Head title="Admin | Dashboard"></Head>
 
     <AdminLayout>
         <template #header>

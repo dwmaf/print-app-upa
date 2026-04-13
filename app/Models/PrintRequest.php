@@ -15,11 +15,6 @@ class PrintRequest extends Model
         'verified_at' => 'datetime',
     ];
 
-    public function user()
-    {
-        return $this->belongsTo(User::class, 'station_id');
-    }
-
     public function filetoprint()
     {
         return $this->belongsTo(Filetoprint::class, 'filetoprint_id');

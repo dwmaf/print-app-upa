@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers\InertiaControllers;
 
-use App\Events\NewTransactionCreated;
-use App\Events\TransactionUpdated;
+use App\Events\NewRequestCreated;
+use App\Events\RequestUpdated;
 use App\Http\Controllers\Controller;
 use App\Models\Filetoprint;
 use App\Models\PrintRequest;
@@ -17,16 +17,13 @@ class InertiaPrintStationController extends Controller
 {
     public function index(Request $request)
     {
-        $station_id = Auth::id();
-        $uploadUrl = $request->getSchemeAndHttpHost() . '/upa/upload/' . $station_id;
+        $uploadUrl = $request->getSchemeAndHttpHost() . '/upa/upload';
         $filetoprints = Filetoprint::with(['latestPrintRequest'])
             ->latest()
-            ->where('station_id', $station_id)
             ->get();
         $qrCode = QrCode::size(300)->margin(2)->generate($uploadUrl);
         return Inertia::render('PrintStation/index', [
             'filetoprints' => $filetoprints,
-            'stationId' => $station_id,
             'qrCode' => (string) $qrCode,
         ]);
     }
@@ -35,7 +32,6 @@ class InertiaPrintStationController extends Controller
     {
         $request->validate([
             'file_id' => 'required|exists:filetoprints,id',
-            'station_id' => 'required',
             'print_config' => 'required|array',
         ]);
 
@@ -70,7 +66,6 @@ class InertiaPrintStationController extends Controller
         $verification = PrintRequest::create([
             'request_id' => 'REQ-' . strtoupper(uniqid()),
             'filetoprint_id' => $filetoprint->id,
-            'station_id' => $request->station_id,
             'original_name' => $filetoprint->original_name,
             'status' => 'pending',
             'copies' => $copies,
@@ -80,7 +75,7 @@ class InertiaPrintStationController extends Controller
             'detected_pages' => $detectedPages,
             'calculated_pages' => $actualPages,
         ]);
-        event(new NewTransactionCreated($request->station_id));
+        event(new NewRequestCreated());
         return redirect()->back();
     }
 
@@ -123,7 +118,7 @@ class InertiaPrintStationController extends Controller
         }
 
         $verification->update(['status' => 'completed']);
-        event(new TransactionUpdated($filetoprint->station_id));
+        event(new RequestUpdated());
         return response()->json([
             'status' => 'success',
             'message' => 'Perintah cetak terkirim.'

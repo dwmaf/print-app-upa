@@ -11,16 +11,9 @@ class FileUploaded implements ShouldBroadcastNow
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
-    public $stationId;
-
-    public function __construct($stationId)
-    {
-        $this->stationId = $stationId;
-    }
-
     public function broadcastOn(): array
     {
-        return [new Channel('printing-channel.' . $this->stationId)];
+        return [new Channel('printing-channel')];
     }
 
     public function broadcastAs()

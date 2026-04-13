@@ -8,16 +8,9 @@ use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
-class NewTransactionCreated implements ShouldBroadcastNow
+class NewRequestCreated implements ShouldBroadcastNow
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
-
-    public $outletId;
-
-    public function __construct($outletId)
-    {
-        $this->outletId = $outletId;
-    }
 
     public function broadcastOn(): array
     {
@@ -26,6 +19,6 @@ class NewTransactionCreated implements ShouldBroadcastNow
 
     public function broadcastAs()
     {
-        return 'transaction.created';
+        return 'request.created';
     }
 }

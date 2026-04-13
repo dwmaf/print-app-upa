@@ -1,7 +1,7 @@
 <script setup>
-import { Head, useForm, router, Link } from '@inertiajs/vue3';
+import { Head, useForm, router} from '@inertiajs/vue3';
 import { ref, watch, onMounted } from 'vue';
-import { Search, Check, X, File, ChevronLeft, ChevronRight } from 'lucide-vue-next';
+import { Search, Check, X } from 'lucide-vue-next';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 import Pagination from '@/Components/Pagination.vue';
 
@@ -12,7 +12,6 @@ const props = defineProps({
 
 const search = ref(props.filters.search);
 
-// Query Search (Debounce agar tidak terlalu berat)
 watch(search, (value) => {
     router.get(route('admin.upa.verify-print.index'), { search: value }, {
         preserveState: true,
@@ -22,14 +21,14 @@ watch(search, (value) => {
 
 onMounted(() => {
     if (window.Echo) {
-        // Listen ke channel ketika permintaan cetak dikirim
+        // Listen ke channel ketika permintaan cetak dikirim/diperbarui statusnya
         window.Echo.channel('admin-upa-channel')
-            .listen('.transaction.created', (e) => {
-                console.log('New transaction created, refreshing...');
+            .listen('.request.created', (e) => {
+                console.log('New request created, refreshing...');
                 router.reload({ preserveScroll: true });
             })
-            .listen('.transaction.updated', (e) => {
-                console.log('Transaction updated, refreshing...');
+            .listen('.request.updated', (e) => {
+                console.log('Request updated, refreshing...');
                 router.reload({ preserveScroll: true });
             });
     }
@@ -68,9 +67,7 @@ const reject = (id) => {
 </script>
 
 <template>
-
-    <Head title="Verifikasi Print" />
-
+    <Head title="Admin | Verify Print"></Head>
     <AdminLayout>
         <template #header>
             <h1 class="text-xl sm:text-2xl md:text-3xl text-gray-800 font-koulen uppercase tracking-wide">
@@ -78,7 +75,6 @@ const reject = (id) => {
             </h1>
         </template>
 
-        <!-- KARTU UTAMA -->
         <div
             class="bg-white rounded-xl sm:rounded-[20px] shadow-sm border border-gray-100 flex-1 flex flex-col p-3 sm:p-6 md:p-8 h-full">
 
@@ -258,7 +254,7 @@ const reject = (id) => {
                 <div class="text-center sm:text-left">
                     Showing {{ printrequests.from }} to {{ printrequests.to }} of {{ printrequests.total }} entries
                 </div>
-                <Pagination links="printrequests.links" />
+                <Pagination :links="printrequests.links" />
             </div>
 
         </div>

@@ -1,7 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-
+use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\InertiaControllers\InertiaAuthController;
 use App\Http\Controllers\InertiaControllers\InertiaVerifyPrintController;
 use App\Http\Controllers\InertiaControllers\InertiaPrintStationController;
@@ -9,14 +9,14 @@ use App\Http\Controllers\InertiaControllers\InertiaUploadController;
 
 
 Route::get('/', function () {
-    if (!auth()->check()) {
+    if (!Auth::check()) {
         return redirect()->route('login');
     }
 
-    $user = auth()->user();
+    $user = Auth::ser();
     
     if ($user->hasRole('super-admin')) {
-        return redirect()->route('admin.dashboard');
+        return redirect()->route('admin.upa.dashboard');
     } elseif ($user->hasRole('station-upa-pkk')) {
         return redirect()->route('upa.station.index');
     }
@@ -52,5 +52,5 @@ Route::group(['middleware' => ['auth', 'role:station-upa-pkk']], function () {
 
 // INERTIA UPLOAD (USER)
 // buat kyu r nya dinamis berubah" setiap 5 menit
-Route::get('/upa/upload/{id}', [InertiaUploadController::class, 'index'])->name('upa.upload.index');
-Route::post('/upa/upload/{id}', [InertiaUploadController::class, 'store'])->name('upa.upload.store');
+Route::get('/upa/upload', [InertiaUploadController::class, 'index'])->name('upa.upload.index');
+Route::post('/upa/upload', [InertiaUploadController::class, 'store'])->name('upa.upload.store');

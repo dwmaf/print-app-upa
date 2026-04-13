@@ -14,7 +14,6 @@ return new class extends Migration
         Schema::create('filetoprints', function (Blueprint $table) {
             $table->id();
             $table->string('filename'); // nama file random yg kesimpan di storage
-            $table->foreignId('station_id')->nullable()->constrained('users'); // ID User laptop station
             $table->string('original_name'); // nama file asli yang muncul di ui
             $table->timestamps();
         });

@@ -11,20 +11,14 @@ use Inertia\Inertia;
 
 class InertiaUploadController extends Controller
 {
-    public function index($id)
+    public function index()
     {
-        $station = User::findOrFail($id);
-
-        return Inertia::render('UploadFile', [
-            'stationId' => $station->id,
-            'stationName' => $station->name,
-        ]);
+        return Inertia::render('UploadFile');
     }
 
-    public function store(Request $request, $id)
+    public function store(Request $request)
     {
         $request->validate([
-            'station_id' => 'required|exists:users,id',
             'files' => 'required|array|min:1',
             'files.*' => 'file|mimes:pdf,jpg,jpeg,png,docx|max:10240',
         ], [
@@ -38,13 +32,12 @@ class InertiaUploadController extends Controller
 
             Filetoprint::create([
                 'filename' => $path,
-                'station_id' => $request->station_id,
                 'original_name' => $uploadedFile->getClientOriginalName(),
             ]);
         }
 
-        event(new FileUploaded($request->station_id));
+        event(new FileUploaded());
 
-        return to_route('upa.upload.index', $id)->with('success', 'File berhasil diunggah!');
+        return to_route('upa.upload.index')->with('success', 'File berhasil diunggah!');
     }
 }

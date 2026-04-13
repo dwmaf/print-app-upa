@@ -14,7 +14,6 @@ return new class extends Migration
         Schema::create('print_requests', function (Blueprint $table) {
             $table->id();
             $table->string('request_id')->unique(); // Unique Order ID
-            $table->foreignId('station_id')->constrained('users')->onDelete('cascade'); // The user requesting print
             $table->foreignId('filetoprint_id')->nullable()->constrained('filetoprints')->nullOnDelete(); // The file to print
             $table->string('original_name'); // Snapshot of filename just in case
             $table->string('status')->default('pending'); // pending, verified, rejected, printed
