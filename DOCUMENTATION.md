@@ -1,5 +1,3 @@
-# Tech Stack
-
 # Dokumentasi Controller Printation UPA
 
 Dokumen ini berisi penjelasan untuk masing-masing controller dan function-function di dalamnya yang digunakan dalam aplikasi ini. Semua controller ini berbasis Inertia.js untuk merender tampilan ke sisi frontend (Vue.js).
@@ -41,7 +39,7 @@ Controller ini mengelola layanan Station Print (tempat print berlangsung). Melip
 
 *   **`submitRequest(Request $request)`**
     *   **Fungsi**: Menerima request konfigurasi pencetakan dari pengguna / admin stasiun (mengatur halaman, mode warna, copy, ukuran kertas). Mengkalkulasi total halaman berdasarkan range. Membuat record `PrintRequest`. Event `NewTransactionCreated` dipanggil.
-    *   **Parameter/Payload**: `file_id`, `station_id`, array `print_config[]`.
+    *   **Parameter/Payload**: `file_id`, array `print_config[]`.
     *   **Return**: Redirect `back()`.
 
 *   **`print(Request $request)`**
@@ -69,13 +67,13 @@ Lokasi: `app/Http/Controllers/InertiaControllers/InertiaUploadController.php`
 Controller yang digunakan oleh user (pengguna awam/mahasiswa) untuk mengunggah file yang akan di-*print* dari HP / Device mereka dengan memindai (scan) QR Code dari Station tertentu.
 
 ### Metode:
-*   **`index($id)`**
-    *   **Fungsi**: Menampilkan halaman tempat pengguna mengunggah file. Parameter ID Station diteruskan ke front-end.
+*   **`index()`**
+    *   **Fungsi**: Menampilkan halaman tempat pengguna mengunggah file.
     *   **Return**: Merender view Inertia `UploadFile`.
 
-*   **`store(Request $request, $id)`**
+*   **`store(Request $request)`**
     *   **Fungsi**: Menerima satu atau banyak file dari form yang dikirim oleh pengguna. Mengunggahnya ke dalam sistem (folder `uploads` disk `public`), serta menyimpan data rekaman file pada *database* model `Filetoprint`. Modul event `FileUploaded` dijalankan.
-    *   **Parameter/Payload**: `station_id`, `files` (array File).
+    *   **Parameter/Payload**: `files` (array File).
     *   **Return**: Redirect ke `upa.upload.index` dengan membawa info flash message (success).
 
 ---
@@ -138,7 +136,7 @@ Dokumen ini berisi penjelasan komponen-komponen Vue.js yang merender antarmuka p
 *   **Fungsi:** Dashboard stasiun cetak yang akan dieksekusi secara lokal (ditampilkan di layar monitor/PC kios print).
 *   **Fitur Utama:**
     *   Kunci utama untuk fungsi cetak lokal: Komponen ini membaca parameter struktur file PDF yang baru dimasukkan melalui library klien **`pdf-lib`**. Hal ini mencegah pembebanan server di mana halaman dideteksi (`getPageCount()`) secara internal *browser*.
-    *   Koneksi konstan soket pribadi **Laravel Echo** (`printing-channel.{stationId}`). Layar stasiun lekas memperbarui antrean seketika saat mahasiswa berhasil mengunggah file baru lewat ponsel mereka/QR.
+    *   Koneksi konstan Laravel Echo ke soket siaran statis (`printing-channel`). Layar stasiun lekas memperbarui antrean seketika saat mahasiswa berhasil mengunggah file baru lewat ponsel mereka/QR.
     *   Memanggil *Endpoint API* murni melingkupi dependensi Ajax (`axios`) secara internal guna mengeksekusi *hardware printer* sesungguhnya (*SumatraPDF* cli dijalankan via API OS) di dalam fungsi eksekutor `executePrint`.
     *   Pusat penanganan status modifikasi State global (Modal Buka/Tutup, dan Pilih banyak opsi baris File untuk ditindak bersamaan).
 
@@ -169,3 +167,66 @@ Dokumen ini berisi penjelasan komponen-komponen Vue.js yang merender antarmuka p
 *   **Fungsi:** Jendela Konfirmasi generik.
 *   **Fitur Utama:**
     *   Komponen reusabel seutuhnya: Semua kata pancingan (ikon, kalimat utama, sifat *bulk* atau tidaknya, penutup pesan, maupun aksi yang dikirim) disalurkan memanfaatkan parameter *props* komponen induknya. Berguna untuk dialog hapus satu berkas dan banyak berkas secara serempak. 
+
+
+# Dokumentasi Web Routes, Models & Events
+
+## 1. Web Routes (`routes/web.php`)
+File ini mendefinisikan seluruh titik masuk URL (Endpoint) aplikasi berbasis sesi untuk web browser. Semua lalu jalurnya dirutekan dengan controller Inertia (*Single Page Application*).
+
+### Pengelompokan Route:
+*   **Root (`/`)**
+    *   Berfungsi sebagai *Gateway* (Gerbang) utama yang mengatur pengalihan (redirect).
+    *   Rute ini secara mandiri mengecek *Role* (peran) dari *user* yang login. Jika terdeteksi sebagai `super-admin`, akan diarahkan ke `/admin/upa/dashboard`. Namun jika sebagai `station-upa-pkk`, akan melempar *user* tersebut ke halaman khusus station (`/upa/station`).
+*   **Guest & Autentikasi**
+    *   `/login` (GET, POST): Menangani antarmuka login. Diikat ke *middleware* `guest`.
+    *   `/logout` (POST): Terikat secara fungsional ke controller untuk mengakhiri sesi.
+*   **Zona Admin (`/admin/upa/*`)**
+    *   Dibentengi oleh *middleware* `auth` dan `role:super-admin`.
+    *   Akses endpoint mencakup dashboard dan riwayat persetujuan file cetak (`/admin/upa/verify-print`).
+*   **Zona Stasiun UPA (`/upa/station/*`)**
+    *   Dibentengi *middleware* `auth` dan `role:station-upa-pkk`.
+    *   Akses fungsional vital mesin cetak ada di sini; termasuk proxy manipulasi CORS PDF, pengajuan alat pencetak, sampai aksi penghapusan fisik berkas.
+*   **Zona Publik / User (`/upa/upload/*`)**
+    *   Akses unggah file oleh mahasiswa dari QR. Menghantam `InertiaUploadController`. Memiliki desain tautan bebas yang rencananya akan dibuat dinamis berganti parameter setiap 5 menit agar tautan QR tak disalahgunakan dari luar lokasi.
+
+---
+
+## 2. Models (`app/Models/`)
+ORM (*Object-Relational Mapping*) dari Laravel, mengikat logika PHP langsung dengan tabel di dalam basis data (SQLite).
+
+### A. `Filetoprint`
+Representasi dari satu buah dokumen (PDF/Gambar) yang diunggah oleh *user*.
+*   **Relasi (`printRequests()`, `latestPrintRequest()`)**: Berelasi `HasMany` dan `HasOne` (mengambil baris terakhir) dengan konfigurasi cetak `PrintRequest`. Artinya, satu file bisa dikonfigurasi cetak berkali-kali.
+*   **`Filetoprint.appends`**: Memiliki *virtual attributes* (peubah semu).
+    *   `type`: Mengambil ekstensi (*extension*) asli dari file (PDF, JPG) via pathinfo.
+    *   `url`: Menjadikan lokasi file yang mentah (path disk) menjadi URI absolut yang bisa diload oleh browser (`asset()`).
+    *   `status`: Mengecek kondisional silang di tabel print dan menembakkan status virtual "new" jika dokumen tersebut belum diutak-atik.
+
+### B. `PrintRequest`
+Representasi dari 1 kali aktivitas perintah print (yang divalidasi oleh stasiun).
+*   **Relasi (`filetoprint()`)**: Terikat `BelongsTo` (Merujuk kembali ke File induk).
+*   **Properti Format**: Meyakinkan Laravel bahwa kolom timestamps `verified_at` diperlakukan sebagai kelas tanggal Mutator DateTime.
+
+### C. `User`
+Diwarisi *traits* bawaan Laravel otentikasi standar yang dipadukan dengan modul eksternal (seperti `Spatie\Permission\Traits\HasRoles` jika memakai Spatie) untuk memfasilitasi kebutuhan verifikasi identitas (Autentikasi Email & Password) serta Peran Administratif (Admin vs Stasiun).
+
+---
+
+## 3. Eksekusi Events (`app/Events/`)
+Mengimplementasikan arsitektur *Pub/Sub WebSockets* menggunakan antarmuka `ShouldBroadcastNow`. Ini memicu event terkirim ke *Real-Time Server* WebSocket (Laravel Reverb).
+
+### A. `FileUploaded`
+*   **Memicu ke Channel**: Menyiarkan sinyal di `printing-channel`.
+*   **Event Alias**: `file.uploaded`
+*   **Fungsi**: Dilemparkan saat mahasiswa baru saja menyelesaikan unggah melalui ponsel mereka. Menginstruksikan laman web stasiun cetak memuat ulang tabel *Inertia* tanpa jeda.
+
+### B. `NewRequestCreated`
+*   **Memicu ke Channel**: `admin-upa-channel`.
+*   **Event Alias**: `request.created`
+*   **Fungsi**: Dipanggil tepat saat operator stasiun memencet tombol "Submit Request". Laman *Verify Print* Admin akan otomatis memunculkan tanda notifikasi ada order baru atau menyesuaikan daftar antrean tanpa perlu merefresh (F5).
+
+### C. `RequestUpdated`
+*   **Memicu ke Channel**: Disiarkan sekalis ke DUA buah target kanal statis: `printing-channel` dan `admin-upa-channel`.
+*   **Event Alias**: `request.updated`
+*   **Fungsi**: Dipanggil untuk siklus perbarui status (*Update Action*). Baik disaat Admin menekan tombol Persetujuan (*Verified/Reject*) maupun di saat dokumen telah usai dicetak menjadi fisik, event melintasi dua kanal agar layar Admin dan Layar stasiun sama-sama selaras me-*refresh* keadaan terbaru.
