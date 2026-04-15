@@ -13,7 +13,7 @@ Route::get('/', function () {
         return redirect()->route('login');
     }
 
-    $user = Auth::ser();
+    $user = Auth::user();
     
     if ($user->hasRole('super-admin')) {
         return redirect()->route('admin.upa.dashboard');

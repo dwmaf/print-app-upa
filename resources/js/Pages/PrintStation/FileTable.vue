@@ -59,21 +59,15 @@ const formatTime = (dateStr) => {
 </script>
 
 <template>
-    <div class="bg-white w-full h-full rounded-xl shadow-lg px-8">
-        <div v-if="showLocalQr" class="flex justify-center animate-in zoom-in duration-300">
-            <div class="bg-white p-6 rounded-2xl shadow-xl flex flex-col items-center border border-indigo-50">
-                <div class="w-44 h-44" v-html="qrCode"></div>
-            </div>
-        </div>
-
-        <div class="flex items-center justify-between mb-6">
-            <div class="flex items-center gap-4">
+    <div class="bg-white w-full rounded-xl shadow-lg px-8 pb-6 overflow-hidden">
+        <div class="flex flex-col gap-4 md:gap-5 mb-6">
+            <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                <div class="flex flex-wrap items-center gap-3 md:gap-4">
                 <img src="/images/logo.png" class="w-18" alt="Logo">
                 <div>
                     <h1 class="text-5xl font-koulen">Printation</h1>
                     <p class="uppercase font-medium text-gray-400 font-roboto">{{ stationName }}</p>
                 </div>
-                <!-- Toggle Lokal: Tidak perlu emit -->
                 <button @click="showLocalQr = !showLocalQr"
                     class="flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-full transition-all border shadow-sm ml-2"
                     :class="showLocalQr ? 'bg-amber-500 text-white border-amber-600' : 'bg-white text-indigo-600 border-indigo-100 hover:bg-indigo-50'">
@@ -86,14 +80,21 @@ const formatTime = (dateStr) => {
                     Hapus {{ selectedIds.length }} File
                 </button>
             </div>
-            <div class="flex items-center gap-4">
-                <div class="text-gray-500 font-bold">{{ filetoprints.length }} file terupload</div>
+                <div class="flex items-center gap-4 lg:justify-end">
+                    <div class="text-gray-500 font-bold">{{ filetoprints.length }} file terupload</div>
+                </div>
+            </div>
+
+            <div v-if="showLocalQr" class="flex justify-center animate-in zoom-in duration-300">
+                <div class="bg-white p-4 md:p-6 rounded-2xl shadow-xl flex flex-col items-center border border-indigo-50 w-fit max-w-full">
+                    <div class="w-44 h-44 md:w-56 md:h-56 overflow-hidden [&>svg]:w-full [&>svg]:h-full" v-html="qrCode"></div>
+                </div>
             </div>
         </div>
 
-        <div class="w-full max-h-[65vh] overflow-y-auto">
+        <div class="w-full overflow-x-auto overflow-y-hidden">
             <table class="w-full border-collapse">
-                <thead class="bg-gray-100 sticky top-0 z-10">
+            <thead class="bg-gray-100">
                     <tr class="text-left text-sm font-semibold text-gray-700">
                         <th class="p-3 text-center">
                             <input type="checkbox"

@@ -16,6 +16,19 @@ const isImage = computed(() => {
     return ['JPG', 'JPEG', 'PNG', 'WEBP'].includes(type);
 });
 
+const isPdf = computed(() => {
+    if (!props.currentFile) return false;
+    return props.currentFile.type?.toUpperCase() === 'PDF';
+});
+
+const previewSrc = computed(() => {
+    if (!props.currentFile) return '';
+    if (isPdf.value) {
+        return route('upa.station.proxy-pdf', props.currentFile.id) + '#toolbar=0&navpanes=0&scrollbar=0&view=FitV';
+    }
+    return props.currentFile.url;
+});
+
 const customPagesInput = ref(null);
 
 watch(() => props.config.pageOption, (newVal) => {
@@ -66,8 +79,11 @@ const totalPageCount = computed(() => {
 
         <!-- Preview Kiri, file pdf nya -->
         <div class="w-2/3 bg-gray-200 relative flex items-center justify-center border-r border-gray-300">
-            <iframe :src="currentFile.url + '#toolbar=0&navpanes=0&scrollbar=0&view=FitV'"
-                class="w-full h-full bg-white"></iframe>
+            <img v-if="isImage" :src="previewSrc" class="w-full h-full object-contain bg-white" alt="Preview file" />
+            <iframe v-else-if="isPdf" :src="previewSrc" class="w-full h-full bg-white"></iframe>
+            <div v-else class="text-center text-gray-500 font-semibold px-6">
+                Preview tidak tersedia untuk tipe file ini.
+            </div>
         </div>
 
         <!-- Preview Kanan, CONFIG PANEL -->
