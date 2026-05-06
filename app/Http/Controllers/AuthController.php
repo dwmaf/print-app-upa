@@ -64,13 +64,6 @@ class AuthController extends Controller
         if ($sheetsLastMonth > 0) {
             $trendPercentage = (($sheetsThisMonth - $sheetsLastMonth) / $sheetsLastMonth) * 100;
         }
-        // Status Overview
-        $statusSummary = [
-            'pending' => PrintRequest::where('status', 'pending')->count(),
-            'verified' => PrintRequest::where('status', 'verified')->count(),
-            'rejected' => PrintRequest::where('status', 'rejected')->count(),
-        ];
-
         // Data Grafik Batang (6 Bulan Terakhir)
         $chartData = [];
         for ($i = 5; $i >= 0; $i--) {
@@ -89,7 +82,6 @@ class AuthController extends Controller
                 'sheetsThisMonth' => number_format($sheetsThisMonth),
                 'sheetsAllTime' => number_format($sheetsAllTime),
                 'trendPercentage' => round($trendPercentage, 1) . '%',
-                'statusSummary' => $statusSummary,
                 'chartData' => $chartData,
             ]
         ]);

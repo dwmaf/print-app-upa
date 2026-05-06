@@ -23,28 +23,28 @@ Route::get('/', function () {
 
 // AUTH
 Route::group(['middleware' => 'guest'], function () {
-    Route::get('/login', [InertiaAuthController::class, 'showLoginForm'])->name('login');
-    Route::post('/login', [InertiaAuthController::class, 'login'])->name('login.post');
+    Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
+    Route::post('/login', [AuthController::class, 'login'])->name('login.post');
 });
-Route::post('/logout', [InertiaAuthController::class, 'logout'])->name('logout');
+Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
 // (SUPER ADMIN)
 Route::group(['middleware' => ['auth', 'role:super-admin']], function () {
-    Route::get('/admin/upa/dashboard', [InertiaAuthController::class, 'dashboard'])->name('admin.upa.dashboard');
-    Route::get('/admin/upa/verify-print', [InertiaVerifyPrintController::class, 'index'])->name('admin.upa.verify-print.index');
-    Route::post('/admin/upa/verify-print/{id}', [InertiaVerifyPrintController::class, 'updateStatus'])->name('admin.upa.verify-print.action');
+    Route::get('/admin/upa/dashboard', [AuthController::class, 'dashboard'])->name('admin.upa.dashboard');
+    Route::get('/admin/upa/verify-print', [VerifyPrintController::class, 'index'])->name('admin.upa.verify-print.index');
+    Route::post('/admin/upa/verify-print/{id}', [VerifyPrintController::class, 'updateStatus'])->name('admin.upa.verify-print.action');
 });
 
 Route::group(['middleware' => ['auth', 'role:station-upa-pkk']], function () {
-    Route::get('/upa/station', [InertiaPrintStationController::class, 'index'])->name('upa.station.index');
-    Route::get('/station/proxy-pdf/{id}', [InertiaPrintStationController::class, 'proxyPdf'])->name('upa.station.proxy-pdf');
-    Route::post('/upa/station/request-print', [InertiaPrintStationController::class, 'submitRequest'])->name('upa.station.request-print');
-    Route::delete('/upa/station/file/{printfile}', [InertiaPrintStationController::class, 'destroy'])->name('upa.station.file.destroy');
-    Route::delete('/upa/station/destroy-multiple', [InertiaPrintStationController::class, 'destroyMultiple'])->name('upa.station.destroy-multiple');
-    Route::delete('/upa/station/destroy/{filetoprint}', [InertiaPrintStationController::class, 'destroy'])->name('upa.station.destroy');
-    Route::post('/upa/station/print', [InertiaPrintStationController::class, 'print'])->name('upa.station.print');
+    Route::get('/upa/station', [PrintStationController::class, 'index'])->name('upa.station.index');
+    Route::get('/station/proxy-pdf/{id}', [PrintStationController::class, 'proxyPdf'])->name('upa.station.proxy-pdf');
+    Route::post('/upa/station/request-print', [PrintStationController::class, 'submitRequest'])->name('upa.station.request-print');
+    Route::delete('/upa/station/file/{printfile}', [PrintStationController::class, 'destroy'])->name('upa.station.file.destroy');
+    Route::delete('/upa/station/destroy-multiple', [PrintStationController::class, 'destroyMultiple'])->name('upa.station.destroy-multiple');
+    Route::delete('/upa/station/destroy/{filetoprint}', [PrintStationController::class, 'destroy'])->name('upa.station.destroy');
+    Route::post('/upa/station/print', [PrintStationController::class, 'print'])->name('upa.station.print');
 });
 
 // UPLOAD (USER)
-Route::get('/upa/upload', [InertiaUploadController::class, 'index'])->name('upa.upload.index');
-Route::post('/upa/upload', [InertiaUploadController::class, 'store'])->name('upa.upload.store');
+Route::get('/upa/upload', [UploadController::class, 'index'])->name('upa.upload.index');
+Route::post('/upa/upload', [UploadController::class, 'store'])->name('upa.upload.store');

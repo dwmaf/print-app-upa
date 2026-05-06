@@ -19,6 +19,7 @@ class VerifyPrintController extends Controller
                         $q->where('original_name', 'like', "%{$search}%");
                     });
             })
+            ->orderByRaw("CASE WHEN status = 'pending' THEN 0 ELSE 1 END ASC")
             ->latest()
             ->paginate(10)
             ->withQueryString();
