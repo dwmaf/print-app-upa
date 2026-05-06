@@ -1,14 +1,13 @@
 <?php
 
-namespace App\Http\Controllers\InertiaControllers;
+namespace App\Http\Controllers;
 
-use App\Http\Controllers\Controller;
 use App\Models\PrintRequest;
 use App\Events\RequestUpdated;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
-class InertiaVerifyPrintController extends Controller
+class VerifyPrintController extends Controller
 {
     public function index(Request $request)
     {

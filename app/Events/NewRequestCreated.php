@@ -11,12 +11,10 @@ use Illuminate\Queue\SerializesModels;
 class NewRequestCreated implements ShouldBroadcastNow
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
-
     public function broadcastOn(): array
     {
         return [new Channel('admin-upa-channel')];
     }
-
     public function broadcastAs()
     {
         return 'request.created';

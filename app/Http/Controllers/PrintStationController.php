@@ -1,19 +1,17 @@
 <?php
 
-namespace App\Http\Controllers\InertiaControllers;
+namespace App\Http\Controllers;
 
 use App\Events\NewRequestCreated;
 use App\Events\RequestUpdated;
-use App\Http\Controllers\Controller;
 use App\Models\Filetoprint;
 use App\Models\PrintRequest;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
-class InertiaPrintStationController extends Controller
+class PrintStationController extends Controller
 {
     public function index(Request $request)
     {
@@ -30,18 +28,11 @@ class InertiaPrintStationController extends Controller
 
     public function submitRequest(Request $request)
     {
-        $request->validate([
-            'file_id' => 'required|exists:filetoprints,id',
-            'print_config' => 'required|array',
-        ]);
-
+        $request->validate(['file_id' => 'required|exists:filetoprints,id',
+        'print_config' => 'required|array',]);
         $filetoprint = Filetoprint::find($request->file_id);
-
         $config = $request->print_config;
-        $copies = $config['copies'] ?? 1;
-        $isColor = ($config['color'] ?? 'bw') === 'color';
         $detectedPages = $config['detected_pages'] ?? 1;
-
         $actualPages = $detectedPages;
         if (isset($config['pages']) && $config['pages'] !== 'all') {
             $actualPages = 0;
@@ -52,76 +43,55 @@ class InertiaPrintStationController extends Controller
                     if (count($range) === 2) {
                         $start = (int)$range[0];
                         $end = (int)$range[1];
-                        if ($start > 0 && $end >= $start) {
-                            $actualPages += ($end - $start + 1);
-                        }
+                        if ($start > 0 && $end >= $start) { $actualPages += ($end - $start + 1); }
                     }
-                } elseif (is_numeric($part)) {
-                    $actualPages++;
-                }
+                } elseif (is_numeric($part)) { $actualPages++; }
             }
             if ($actualPages === 0) $actualPages = $detectedPages;
         }
-
-        $verification = PrintRequest::create([
+        PrintRequest::create([
             'request_id' => 'REQ-' . strtoupper(uniqid()),
-            'filetoprint_id' => $filetoprint->id,
-            'original_name' => $filetoprint->original_name,
-            'status' => 'pending',
-            'copies' => $copies,
-            'color_mode' => $isColor ? 'color' : 'bw',
-            'paper_size' => $config['paper'] ?? 'A4',
-            'page_range' => $config['pages'] ?? 'all',
-            'detected_pages' => $detectedPages,
-            'calculated_pages' => $actualPages,
+            'filetoprint_id' => $filetoprint->id, 'original_name' => $filetoprint->original_name,
+            'status' => 'pending', 'copies' => $config['copies'] ?? 1,
+            'color_mode' => ($config['color'] ?? 'bw') === 'color' ? 'color' : 'bw',
+            'paper_size' => $config['paper'] ?? 'A4', 'page_range' => $config['pages'] ?? 'all',
+            'detected_pages' => $detectedPages, 'calculated_pages' => $actualPages,
         ]);
-        event(new NewRequestCreated());
+        event(new NewRequestCreated()); 
         return redirect()->back();
     }
 
     public function print(Request $request)
     {
-        $request->validate([
-            'request_id' => 'required|exists:print_requests,id',
-        ]);
-
+        $request->validate(['request_id' => 'required|exists:print_requests,id',]);
         $verification = PrintRequest::findOrFail($request->request_id);
         $filetoprint  = Filetoprint::findOrFail($verification->filetoprint_id);
-
         $pdfPath = storage_path('app/public/' . $filetoprint->filename);
         if (!file_exists($pdfPath)) {
             return response()->json(['status' => 'error', 'message' => 'File tidak ditemukan.'], 404);
         }
-
         $exePath = base_path('tools/SumatraPDF.exe');
         if (file_exists($exePath)) {
             $settings = [];
             $settings[] = $verification->copies . "x";
-
             if ($verification->color_mode == 'bw') {
                 $settings[] = "monochrome";
             } else {
                 $settings[] = "color";
             }
-
             if (!empty($verification->paper_size)) {
                 $settings[] = "paper=" . $verification->paper_size;
             }
-
             if (!empty($verification->page_range) && $verification->page_range !== 'all') {
                 $settings[] = $verification->page_range;
             }
-
             $settingsString = implode(',', $settings);
             $command = "\"{$exePath}\" -print-to-default -print-settings \"{$settingsString}\" -silent \"{$pdfPath}\"";
             shell_exec($command);
         }
-
         $verification->update(['status' => 'completed']);
         event(new RequestUpdated());
-        return response()->json([
-            'status' => 'success',
-            'message' => 'Perintah cetak terkirim.'
+        return response()->json(['status' => 'success','message' => 'Perintah cetak terkirim.'
         ]);
     }
 

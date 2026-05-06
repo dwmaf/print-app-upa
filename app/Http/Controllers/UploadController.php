@@ -1,15 +1,13 @@
 <?php
 
-namespace App\Http\Controllers\InertiaControllers;
+namespace App\Http\Controllers;
 
 use App\Events\FileUploaded;
-use App\Http\Controllers\Controller;
 use App\Models\Filetoprint;
-use App\Models\User;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
-class InertiaUploadController extends Controller
+class UploadController extends Controller
 {
     public function index()
     {
@@ -20,10 +18,10 @@ class InertiaUploadController extends Controller
     {
         $request->validate([
             'files' => 'required|array|min:1',
-            'files.*' => 'file|mimes:pdf,jpg,jpeg,png,docx|max:10240',
+            'files.*' => 'file|mimes:pdf|max:10240',
         ], [
             'files.*.max' => 'Ukuran file melebihi 10MB',
-            'files.*.mimes' => 'Format file tidak didukung. Gunakan PDF, PNG, JPG, atau JPEG',
+            'files.*.mimes' => 'Format file tidak didukung. Gunakan PDF',
             'files.required' => 'Silakan pilih file untuk diunggah',
         ]);
 
