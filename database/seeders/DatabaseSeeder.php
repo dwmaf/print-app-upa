@@ -13,17 +13,12 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         /**
-         * 1 Roles (Spatie)
+         * (Spatie)
          */
         $roleAdmin = Role::firstOrCreate(['name' => 'super-admin']);
         
         $roleStationUPAPKK = Role::firstOrCreate(['name' => 'station-upa-pkk']);
 
-        /*
-        |--------------------------------------------------------------------------
-        | SEEDER KHUSUS KP
-        |--------------------------------------------------------------------------
-        */
         $admin = User::updateOrCreate(
             ['email' => 'admin@upa.printation'],
             [

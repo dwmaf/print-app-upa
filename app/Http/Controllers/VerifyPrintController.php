@@ -1,14 +1,13 @@
 <?php
 
-namespace App\Http\Controllers\InertiaControllers;
+namespace App\Http\Controllers;
 
-use App\Http\Controllers\Controller;
 use App\Models\PrintRequest;
 use App\Events\RequestUpdated;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
-class InertiaVerifyPrintController extends Controller
+class VerifyPrintController extends Controller
 {
     public function index(Request $request)
     {
@@ -20,6 +19,7 @@ class InertiaVerifyPrintController extends Controller
                         $q->where('original_name', 'like', "%{$search}%");
                     });
             })
+            ->orderByRaw("CASE WHEN status = 'pending' THEN 0 ELSE 1 END ASC")
             ->latest()
             ->paginate(10)
             ->withQueryString();

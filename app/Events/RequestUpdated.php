@@ -11,7 +11,6 @@ use Illuminate\Queue\SerializesModels;
 class RequestUpdated implements ShouldBroadcastNow
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
-
     public function broadcastOn(): array
     {
         return [
@@ -19,7 +18,6 @@ class RequestUpdated implements ShouldBroadcastNow
             new Channel('admin-upa-channel')
         ];
     }
-
     public function broadcastAs()
     {
         return 'request.updated';

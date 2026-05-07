@@ -116,7 +116,7 @@ const closeModal = () => {
             <!-- Judul & Search -->
             <div
                 class="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 md:mb-8 gap-3 md:gap-4">
-                <h2 class="text-2xl sm:text-2xl font-bold text-black">Daftar File</h2>
+                <h2 class="text-2xl sm:text-2xl font-bold text-black">Daftar Permintaan Cetak</h2>
 
                 <!-- Search Input -->
                 <div class="relative w-full md:w-64">
@@ -124,7 +124,7 @@ const closeModal = () => {
                         <Search class="w-5 h-5" />
                     </span>
 
-                    <input v-model="search" type="text" placeholder="Cari Order ID / File..."
+                    <input v-model="search" type="text" placeholder="Cari ID File..."
                         class="w-full bg-[#FAFAFA] text-gray-700 text-sm rounded-lg border-none focus:ring-2 focus:ring-indigo-200 focus:bg-white py-2.5 pl-10 pr-4 transition-all">
                 </div>
             </div>

@@ -10,22 +10,23 @@ class PrintRequestSeeder extends Seeder
     public function run(): void
     {
         // Hapus data lama jika perlu
-        // PrintRequest::truncate();
+        PrintRequest::truncate();
 
         for ($i = 0; $i < 6; $i++) {
-            $date = Carbon::now()->subMonths($i);
-            
-            // Buat 10-20 transaksi random per bulan
+            $monthDate = Carbon::now()->subMonths($i)->startOfMonth();
+            $maxDays = ($i === 0) ? Carbon::now()->day - 1 : 27;
+            if ($maxDays < 0) $maxDays = 0;
+            // Buat 10-20 permintaan random per bulan
             for ($j = 0; $j < rand(10, 20); $j++) {
                 PrintRequest::create([
                     'request_id' => 'REQ-' . strtoupper(bin2hex(random_bytes(3))),
-                    'user_id' => 1, // Sesuaikan ID user
-                    'station_id' => 2, // Sesuaikan ID station
-                    'file_id' => 1,
-                    'status' => 'completed',
+                    'filetoprint_id' => 1,
+                    'original_name' => 'dokumen_test_' . $j . '.pdf',
+                    'status' => collect(['verified', 'completed'])->random(),
                     'calculated_pages' => rand(1, 50),
                     'copies' => rand(1, 3),
-                    'created_at' => $date->copy()->subDays(rand(1, 28)),
+                    'color_mode' => rand(0, 1) ? 'bw' : 'color',
+                    'created_at' => $monthDate->copy()->addDays(rand(0, $maxDays))->addHours(rand(8, 17)),
                 ]);
             }
         }
