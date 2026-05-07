@@ -4,6 +4,7 @@ import { ref, watch, onMounted } from 'vue';
 import { Search, Check, X } from 'lucide-vue-next';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 import Pagination from '@/Components/Pagination.vue';
+import VerificationModal from './VerifyPrint/Modals/VerificationModal.vue';
 
 const props = defineProps({
     printrequests: Object,
@@ -11,6 +12,11 @@ const props = defineProps({
 });
 
 const search = ref(props.filters.search);
+const modalOpen = ref(false);
+const currentAction = ref(null);
+const selectedRequestId = ref(null);
+const selectedRequestData = ref(null);
+const loading = ref(false);
 
 watch(search, (value) => {
     router.get(route('admin.upa.verify-print.index'), { search: value }, {
@@ -39,7 +45,7 @@ const getStatusStyle = (status) => {
         case 'pending': return 'bg-yellow-50 text-yellow-600';
         case 'completed': return 'bg-green-50 text-green-600';
         case 'rejected': return 'bg-red-50 text-red-600';
-        case 'completed': return 'bg-blue-50 text-blue-600';
+        // case 'completed': return 'bg-blue-50 text-blue-600';
         default: return 'bg-gray-100 text-gray-600';
     }
 };
@@ -52,16 +58,35 @@ const getStatusLabel = (status) => {
     }
 };
 
-const verify = (id) => {
-    if (confirm('Verifikasi order ini?')) {
-        useForm({ action: 'verify' }).post(route('admin.upa.verify-print.action', { id }));
+const openVerificationModal = (id, requestData, action) => {
+    selectedRequestId.value = id;
+    selectedRequestData.value = requestData;
+    currentAction.value = action;
+    modalOpen.value = true;
+};
+
+const confirmAction = async () => {
+    if (!selectedRequestId.value || !currentAction.value) return;
+    
+    loading.value = true;
+    
+    try {
+        await useForm({ action: currentAction.value }).post(
+            route('admin.upa.verify-print.action', { id: selectedRequestId.value })
+        );
+        modalOpen.value = false;
+        loading.value = false;
+    } catch (error) {
+        loading.value = false;
+        console.error('Error:', error);
     }
 };
 
-const reject = (id) => {
-    if (confirm('Tolak order ini?')) {
-        useForm({ action: 'reject' }).post(route('admin.upa.verify-print.action', { id }));
-    }
+const closeModal = () => {
+    modalOpen.value = false;
+    currentAction.value = null;
+    selectedRequestId.value = null;
+    selectedRequestData.value = null;
 };
 
 </script>
@@ -74,6 +99,16 @@ const reject = (id) => {
                 Verifikasi Print
             </h1>
         </template>
+
+        <!-- Verification Modal -->
+        <VerificationModal 
+            :show="modalOpen"
+            :action="currentAction"
+            :request-id="selectedRequestData?.request_id"
+            :loading="loading"
+            @close="closeModal"
+            @confirm="confirmAction"
+        />
 
         <div
             class="bg-white rounded-xl sm:rounded-[20px] shadow-sm border border-gray-100 flex-1 flex flex-col p-3 sm:p-6 md:p-8 h-full">
@@ -149,11 +184,11 @@ const reject = (id) => {
                             <!-- AKSI -->
                             <td class="py-5 px-4 text-right">
                                 <div v-if="printrequest.status === 'pending'" class="flex justify-end gap-2">
-                                    <button @click="verify(printrequest.id)"
+                                    <button @click="openVerificationModal(printrequest.id, printrequest, 'verify')"
                                         class="w-8 h-8 rounded bg-[#4ADE80] text-white flex items-center justify-center hover:bg-green-500 transition shadow-sm cursor-pointer">
                                         <Check class="w-4 h-4" stroke-width="3" />
                                     </button>
-                                    <button @click="reject(printrequest.id)"
+                                    <button @click="openVerificationModal(printrequest.id, printrequest, 'reject')"
                                         class="w-8 h-8 rounded bg-[#FB7185] text-white flex items-center justify-center hover:bg-red-500 transition shadow-sm cursor-pointer">
                                         <X class="w-4 h-4" stroke-width="3" />
                                     </button>
@@ -231,12 +266,12 @@ const reject = (id) => {
 
                     <!-- Action Buttons -->
                     <div v-if="printrequest.status === 'pending'" class="flex gap-2.5">
-                        <button @click="verify(printrequest.id)"
+                        <button @click="openVerificationModal(printrequest.id, printrequest, 'verify')"
                             class="flex-1 bg-[#4ADE80] text-white py-3.5 px-4 rounded-lg font-bold text-base hover:bg-green-500 transition shadow-sm flex items-center justify-center gap-2 active:scale-95">
                             <Check class="w-5 h-5" stroke-width="3" />
                             Verifikasi
                         </button>
-                        <button @click="reject(printrequest.id)"
+                        <button @click="openVerificationModal(printrequest.id, printrequest, 'reject')"
                             class="flex-1 bg-[#FB7185] text-white py-3.5 px-4 rounded-lg font-bold text-base hover:bg-red-500 transition shadow-sm flex items-center justify-center gap-2 active:scale-95">
                             <X class="w-5 h-5" stroke-width="3" />
                             Tolak

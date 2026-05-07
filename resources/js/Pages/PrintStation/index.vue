@@ -9,6 +9,7 @@ import EmptyQR from './EmptyQR.vue';
 import FileTable from './FileTable.vue';
 import PrintConfig from './PrintConfig.vue';
 import DeleteModal from './Modals/DeleteModal.vue';
+import PrintFeedbackModal from './Modals/PrintFeedbackModal.vue';
 
 // PROPS
 const props = defineProps({
@@ -21,6 +22,11 @@ const modalOpen = ref(false);
 const deleteModalOpen = ref(false);
 const bulkDeleteModalOpen = ref(false);
 const loading = ref(false);
+const feedbackModalOpen = ref(false);
+const feedbackType = ref('success');
+const feedbackTitle = ref('Informasi');
+const feedbackMessage = ref('');
+const reloadAfterFeedback = ref(false);
 
 const currentFile = ref(null);
 const fileToDelete = ref(null);
@@ -93,6 +99,22 @@ const closePrintModal = () => {
     currentFile.value = null;
 };
 
+const openFeedbackModal = (type, title, message, shouldReload = false) => {
+    feedbackType.value = type;
+    feedbackTitle.value = title;
+    feedbackMessage.value = message;
+    reloadAfterFeedback.value = shouldReload;
+    feedbackModalOpen.value = true;
+};
+
+const closeFeedbackModal = () => {
+    feedbackModalOpen.value = false;
+    if (reloadAfterFeedback.value) {
+        router.reload();
+    }
+    reloadAfterFeedback.value = false;
+};
+
 const submitRequest = () => {
     const form = useForm({
         file_id: currentFile.value.id,
@@ -121,14 +143,13 @@ const executePrint = async () => {
         });
 
         if (response.data.status === 'success') {
-            alert(response.data.message);
             closePrintModal();
-            router.reload();
+            openFeedbackModal('success', 'Perintah Terkirim', response.data.message, true);
         } else {
-            alert(response.data.message);
+            openFeedbackModal('error', 'Gagal Mencetak', response.data.message || 'Perintah cetak tidak dapat diproses.');
         }
     } catch (error) {
-        alert(error.response?.data?.message || 'Gagal mengirim perintah cetak.');
+        openFeedbackModal('error', 'Gagal Mencetak', error.response?.data?.message || 'Gagal mengirim perintah cetak.');
     } finally {
         loading.value = false;
     }
@@ -195,4 +216,7 @@ onMounted(() => {
         <DeleteModal :show="bulkDeleteModalOpen" :is-bulk="true" :title="`Hapus ${selectedIds.length} File?`"
             message="Semua file yang dipilih akan dihapus permanen dari server." confirm-text="Hapus Semua"
             @close="bulkDeleteModalOpen = false" @confirm="confirmBulkDelete" />
+
+        <PrintFeedbackModal :show="feedbackModalOpen" :type="feedbackType" :title="feedbackTitle"
+            :message="feedbackMessage" @close="closeFeedbackModal" />
 </template>
